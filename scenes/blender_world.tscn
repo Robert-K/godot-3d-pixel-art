@@ -1,0 +1,26 @@
+[gd_scene load_steps=5 format=3 uid="uid://ca86pclluf4m8"]
+
+[ext_resource type="PackedScene" uid="uid://g3x4ofnfhnyy" path="res://assets/basic_scene.blend" id="1_jrdlf"]
+[ext_resource type="PackedScene" uid="uid://j53lascxa2bm" path="res://assets/birch_trees.blend" id="4_5rl4p"]
+[ext_resource type="Material" uid="uid://7ajwrnn6uf6m" path="res://materials/rock.tres" id="5_6ypbi"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_d5sxg"]
+radius = 1.0
+height = 2.0
+
+[node name="BlenderScene" type="Node3D"]
+
+[node name="BasicScene" parent="." instance=ExtResource("1_jrdlf")]
+
+[node name="Ground" parent="BasicScene" index="0"]
+visible = false
+
+[node name="birch_trees" parent="." instance=ExtResource("4_5rl4p")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.519106, 0, -9.31078)
+
+[node name="Sphere" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.24523, 0.495362, 2.16168)
+mesh = SubResource("SphereMesh_d5sxg")
+surface_material_override/0 = ExtResource("5_6ypbi")
+
+[editable path="BasicScene"]

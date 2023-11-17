@@ -1,0 +1,92 @@
+[gd_scene load_steps=12 format=3 uid="uid://c7kjke7mmdjoa"]
+
+[ext_resource type="Shader" path="res://shaders/flexible_toon.gdshader" id="1_lnlxn"]
+[ext_resource type="Shader" path="res://shaders/outline_and_edge.gdshader" id="2_rjfai"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_frppt"]
+sky_top_color = Color(0.101961, 0.0980392, 0.196078, 1)
+sky_horizon_color = Color(0.101961, 0.0980392, 0.196078, 1)
+sky_curve = 1.0
+ground_bottom_color = Color(0.396078, 0.45098, 0.572549, 1)
+ground_horizon_color = Color(0.101961, 0.0980392, 0.196078, 1)
+ground_curve = 1.0
+sun_curve = 1e-05
+use_debanding = false
+
+[sub_resource type="Sky" id="Sky_mm3ts"]
+sky_material = SubResource("ProceduralSkyMaterial_frppt")
+
+[sub_resource type="Environment" id="Environment_r1tgp"]
+background_mode = 2
+sky = SubResource("Sky_mm3ts")
+ambient_light_source = 2
+ambient_light_color = Color(0.580392, 0.992157, 1, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_751el"]
+specular_mode = 1
+albedo_color = Color(0.2, 0.596078, 0.294118, 1)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_kxf5v"]
+size = Vector2(10, 10)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_okqva"]
+render_priority = 0
+shader = ExtResource("1_lnlxn")
+shader_parameter/albedo = Color(0.890196, 0, 0.243137, 1)
+shader_parameter/clamp_diffuse_to_max = false
+shader_parameter/cuts = 3
+shader_parameter/wrap = 0.0
+shader_parameter/steepness = 1.0
+shader_parameter/use_attenuation = true
+shader_parameter/use_specular = false
+shader_parameter/specular_strength = 1.0
+shader_parameter/specular_shininess = 16.0
+shader_parameter/use_rim = false
+shader_parameter/rim_width = 8.0
+shader_parameter/rim_color = Color(1, 1, 1, 1)
+shader_parameter/use_ramp = false
+shader_parameter/use_borders = false
+shader_parameter/border_width = 0.01
+
+[sub_resource type="BoxMesh" id="BoxMesh_1dtpy"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_54q7p"]
+render_priority = 0
+shader = ExtResource("2_rjfai")
+shader_parameter/outline_color = Color(1, 1, 1, 1)
+shader_parameter/edge_color = Color(0, 0, 0, 1)
+shader_parameter/depth_threshold = 0.5
+shader_parameter/depth_normal_threshold = 0.75
+shader_parameter/depth_normal_threshold_scale = 2.0
+shader_parameter/convex_threshold = 0.1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_xcdem"]
+top_radius = 1.6
+bottom_radius = 2.0
+radial_segments = 8
+
+[node name="World" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_r1tgp")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.34202, 0.574648, -0.743507, 0, 0.791223, 0.611527, 0.939693, -0.209154, 0.270614, 0, 0, 0)
+shadow_enabled = true
+
+[node name="Plane" type="MeshInstance3D" parent="."]
+material_override = SubResource("StandardMaterial3D_751el")
+mesh = SubResource("PlaneMesh_kxf5v")
+skeleton = NodePath("../..")
+
+[node name="Cube" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+material_override = SubResource("ShaderMaterial_okqva")
+mesh = SubResource("BoxMesh_1dtpy")
+skeleton = NodePath("../..")
+
+[node name="Cylinder" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 0)
+material_override = SubResource("ShaderMaterial_54q7p")
+mesh = SubResource("CylinderMesh_xcdem")
+skeleton = NodePath("../..")

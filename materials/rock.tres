@@ -1,0 +1,17 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://7ajwrnn6uf6m"]
+
+[ext_resource type="Shader" path="res://shaders/pixel_surface.gdshader" id="2_1sdht"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("2_1sdht")
+shader_parameter/albedo = Color(0.768627, 0.635294, 0.576471, 1)
+shader_parameter/cuts = 3
+shader_parameter/outline_intensity = 0.1
+shader_parameter/outline_color = Color(0.1, 0.1, 0.2, 1)
+shader_parameter/depth_threshold = 0.25
+shader_parameter/depth_normal_threshold = 0.75
+shader_parameter/depth_normal_threshold_scale = 2.0
+shader_parameter/edge_intensity = 0.7
+shader_parameter/edge_color = Color(0.8, 0.721569, 0.721569, 1)
+shader_parameter/convex_threshold = 0.1

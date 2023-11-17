@@ -1,0 +1,9 @@
+[gd_resource type="MultiMesh" load_steps=2 format=3 uid="uid://dr5iroe0dtc27"]
+
+[sub_resource type="QuadMesh" id="QuadMesh_shtoy"]
+size = Vector2(0.3, 0.3)
+center_offset = Vector3(0, 0.15, 0)
+
+[resource]
+transform_format = 1
+mesh = SubResource("QuadMesh_shtoy")
