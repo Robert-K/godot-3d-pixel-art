@@ -2,13 +2,19 @@
 extends MeshInstance3D
 
 @export var noise: Noise
-@export var threshold: float = 0
 @export var map_size: Vector2i = Vector2i(64, 64)
 @export var square_size: float = 1
 @export var draw_control_nodes: bool = false
 @export var draw_outlines: bool = false
 @export var cells_per_tile: float = 1
 @export var speed: float = 1
+
+@export var height_scale: float = 8
+@export var step_height: float = 1
+@export var merge_threshold: float = 0.5
+@export var slope_multiplier: float = 1
+
+@export var terrace_material: Material
 
 var offset: float = 0
 
@@ -17,8 +23,10 @@ var terraces: Array
 
 var generation_time = 0
 
+
 func _get_tool_buttons():
 	return [test]
+
 
 func _process(delta):
 	if not Engine.is_editor_hint():
@@ -29,7 +37,8 @@ func _process(delta):
 			terrace.debug_draw_control_nodes()
 		if draw_outlines:
 			terrace.debug_draw_outlines()
-	DebugDraw2D.set_text("Generation time", generation_time);
+	DebugDraw2D.set_text("Generation time", generation_time)
+
 
 func test():
 	# Random map
@@ -44,13 +53,33 @@ func test():
 		for y in range(map[x].size()):
 			var nx = round(x / cells_per_tile)
 			var ny = round(y / cells_per_tile)
-			map[x][y] = noise.get_noise_3d(nx, ny, offset) > threshold
+			map[x][y] = MSMapTile.new(
+				(noise.get_noise_3d(nx, ny, offset) * 0.5 + 0.5) * height_scale
+			)
 	var time = Time.get_ticks_msec()
-	terraces = [MSTerrace.new(map, square_size)]
-	mesh = generate_mesh(terraces[0])
+	generate_terraces()
+	var tmp_mesh = ArrayMesh.new()
+	for terrace in terraces:
+		add_terrace_surface_to_mesh(tmp_mesh, terrace, terrace_material)
+	mesh = tmp_mesh
 	generation_time = Time.get_ticks_msec() - time
 
-func generate_mesh(terrace: MSTerrace):
+
+func generate_terraces():
+	terraces = []
+	var current_height = 0
+	while current_height < height_scale:
+		terraces.append(
+			MSTerrace.new(
+				map, square_size, current_height, merge_threshold, slope_multiplier, terraces.size()
+			)
+		)
+		current_height += step_height
+
+
+func add_terrace_surface_to_mesh(
+	array_mesh: ArrayMesh, terrace: MSTerrace, _terrace_material: Material
+):
 	var surface_array = []
 	surface_array.resize(Mesh.ARRAY_MAX)
 	surface_array[Mesh.ARRAY_VERTEX] = terrace.vertices
@@ -58,10 +87,10 @@ func generate_mesh(terrace: MSTerrace):
 	surface_array[Mesh.ARRAY_NORMAL] = terrace.normals
 	surface_array[Mesh.ARRAY_INDEX] = terrace.indices
 
-	var tmp_mesh = ArrayMesh.new()
-	tmp_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface_array)
+	if terrace.vertices.size() > 0:
+		array_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface_array)
+		array_mesh.surface_set_material(array_mesh.get_surface_count() - 1, _terrace_material)
 
-	return tmp_mesh
 
 class MSTerrace:
 	var map: Array
@@ -74,8 +103,19 @@ class MSTerrace:
 	var triangle_dict: Dictionary
 	var checked_vertices: PackedInt32Array
 	var outlines: Array
+	var height: float
+	var merge_threshold: float
+	var slope_multiplier: float
+	var index: int
 
-	func _init(_map: Array, _square_size: float):
+	func _init(
+		_map: Array,
+		_square_size: float,
+		_height: float,
+		_merge_threshold: float,
+		_slope_multiplier: float,
+		_index: int
+	):
 		map = _map
 		square_size = _square_size
 		vertices = PackedVector3Array()
@@ -85,13 +125,19 @@ class MSTerrace:
 		triangle_dict = {}
 		checked_vertices = PackedInt32Array()
 		outlines = []
+		height = _height
+		merge_threshold = _merge_threshold
+		slope_multiplier = _slope_multiplier
+		index = _index
 
-		square_grid = MSSquareGrid.new(map, square_size)
+		square_grid = MSSquareGrid.new(
+			map, square_size, height, merge_threshold, slope_multiplier, index
+		)
 
 		for x in range(square_grid.squares.size()):
 			for y in range(square_grid.squares[x].size()):
 				triangulate_square(square_grid.squares[x][y])
-		
+
 		calculate_mesh_outlines()
 		calculate_uvs()
 		calculate_normals()
@@ -104,7 +150,6 @@ class MSTerrace:
 				var dimensions = Vector3(size, size, size)
 				DebugDraw3D.draw_box(control_node.position - dimensions / 2, dimensions, color)
 
-
 	func debug_draw_outlines():
 		for outline in outlines:
 			var vertex_a: Vector3
@@ -116,7 +161,6 @@ class MSTerrace:
 			vertex_a = vertices[outline[0]]
 			vertex_b = vertices[outline[outline.size() - 1]]
 			DebugDraw3D.draw_line(vertex_a, vertex_b, Color("green"))
-
 
 	func triangulate_square(square: MSSquare):
 		match square.configuration:
@@ -135,7 +179,12 @@ class MSTerrace:
 			# 2 points:
 			3:
 				mesh_from_points(
-					[square.center_right, square.bottom_right, square.bottom_left, square.center_left]
+					[
+						square.center_right,
+						square.bottom_right,
+						square.bottom_left,
+						square.center_left
+					]
 				)
 			6:
 				mesh_from_points(
@@ -223,7 +272,6 @@ class MSTerrace:
 					checked_vertices.append(square.bottom_right.vertex_index)
 					checked_vertices.append(square.bottom_left.vertex_index)
 
-
 	func mesh_from_points(points: Array):
 		assign_vertices(points)
 
@@ -236,13 +284,11 @@ class MSTerrace:
 		if points.size() >= 6:
 			create_triangle(points[0], points[4], points[5])
 
-
 	func assign_vertices(points: Array):
 		for i in range(points.size()):
 			if points[i].vertex_index == -1:
 				points[i].vertex_index = vertices.size()
 				vertices.append(points[i].position)
-
 
 	func create_triangle(a: MSNode, b: MSNode, c: MSNode):
 		# Going counter-clockwise, so the normal points up
@@ -255,7 +301,6 @@ class MSTerrace:
 		add_triangle_to_dict(b.vertex_index, triangle)
 		add_triangle_to_dict(c.vertex_index, triangle)
 
-
 	func add_triangle_to_dict(vertex_index_key: int, triangle: MSTriangle):
 		if triangle_dict.has(vertex_index_key):
 			triangle_dict[vertex_index_key].append(triangle)
@@ -263,7 +308,6 @@ class MSTerrace:
 			var triangle_list = []
 			triangle_list.append(triangle)
 			triangle_dict[vertex_index_key] = triangle_list
-
 
 	func calculate_mesh_outlines():
 		outlines = []
@@ -278,14 +322,12 @@ class MSTerrace:
 					new_outline.append(vertex_index)
 					outlines.append(new_outline)
 
-
 	func follow_outline(vertex_index: int, outline: Array):
 		outline.append(vertex_index)
 		checked_vertices.append(vertex_index)
 		var next_vertex_index = get_connected_outline_vertex(vertex_index)
 		if next_vertex_index != -1:
 			follow_outline(next_vertex_index, outline)
-
 
 	func get_connected_outline_vertex(vertex_index: int):
 		var triangles_containing_vertex = triangle_dict[vertex_index]
@@ -298,7 +340,6 @@ class MSTerrace:
 				):
 					return triangle_vertex_index
 		return -1
-
 
 	func is_outline_edge(vertex_index_a: int, vertex_index_b: int):
 		var triangles_containing_a = triangle_dict[vertex_index_a]
@@ -319,11 +360,10 @@ class MSTerrace:
 			var map_width = node_count_x * square_size
 			var map_height = node_count_y * square_size
 			var uv = Vector2(
-				(vertex.x + map_width / 2) / map_width,
-				(vertex.z + map_height / 2) / map_height
+				(vertex.x + map_width / 2) / map_width, (vertex.z + map_height / 2) / map_height
 			)
 			uvs[i] = uv
-	
+
 	func calculate_normals():
 		normals.resize(vertices.size())
 		for i in range(normals.size()):
@@ -333,12 +373,21 @@ class MSTerrace:
 class MSSquareGrid:
 	var squares: Array
 	var control_nodes: Array = []
+	var terrace_index: int
 
-	func _init(map: Array, square_size: float):
+	func _init(
+		map: Array,
+		square_size: float,
+		height: float,
+		merge_threshold: float,
+		slope_multiplier: float,
+		_terrace_index: int
+	):
 		var node_count_x = map.size()
 		var node_count_y = map[0].size()
 		var map_width = node_count_x * square_size
 		var map_height = node_count_y * square_size
+		terrace_index = _terrace_index
 
 		control_nodes.resize(node_count_x)
 		for x in range(node_count_x):
@@ -346,10 +395,18 @@ class MSSquareGrid:
 			col.resize(node_count_y)
 			control_nodes[x] = col
 			for y in range(node_count_y):
+				var map_tile = map[x][y]
 				var position = Vector3(
-					-map_width / 2 + x * square_size, 0, -map_height / 2 + y * square_size
+					-map_width / 2 + x * square_size,
+					(map_tile.height - height) * slope_multiplier + height,
+					-map_height / 2 + y * square_size
 				)
-				control_nodes[x][y] = MSControlNode.new(position, map[x][y], square_size)
+				var active = (
+					map_tile.terrace_index == -1 and abs(map_tile.height - height) < merge_threshold
+				)
+				control_nodes[x][y] = MSControlNode.new(position, active, square_size)
+				if active:
+					map[x][y].terrace_index = terrace_index
 
 		squares = []
 		squares.resize(node_count_x - 1)
@@ -407,8 +464,9 @@ class MSSquare:
 			configuration += 2
 		if bottom_left.active:
 			configuration += 1
-		
+
 		is_on_map_edge = _is_on_map_edge
+
 
 class MSControlNode:
 	extends MSNode
@@ -451,3 +509,12 @@ class MSTriangle:
 			or vertex_index == vertex_index_b
 			or vertex_index == vertex_index_c
 		)
+
+
+class MSMapTile:
+	var height: float
+	var terrace_index: int
+
+	func _init(_height: float):
+		height = _height
+		terrace_index = -1
