@@ -1,46 +1,41 @@
 extends Node3D
 
-@export var move_speed: float = 8.0
-var _velocity: Vector2 = Vector2.ZERO
+@export var follow_target: Node3D = null
+
+@export var snap_threshold: float = 2
 
 @export_range(0, 50) var orbit_speed: float = 8.0
-var _target_orbit := rotation.y
-var _target_height: float = rotation.x
+var _target_yaw := rotation.y
+var _target_pitch: float = rotation.x
 
 @onready var cam: Camera3D = $Camera3D
 
 
-func _process(delta: float) -> void:
+func angle_difference(from, to):
+	var difference = fmod(to - from, TAU)
+	return fmod(2 * difference, TAU) - difference
+
+
+func _process(delta: float):
 	# movement
-	var input_vec := Input.get_vector("cam_left", "cam_right", "cam_back", "cam_forward")
+	global_position = global_position.lerp(follow_target.global_position, 0.7 * delta)
 	
-	input_vec = lerp(_velocity, input_vec, 0.1)
-	_velocity = input_vec
-	
-	# basis without pitch, so pretty much the yaw; who rolls a camera??
-	var yaw := Basis(basis.x, Vector3.UP, basis.z).orthonormalized()
-	# prevent infinite camera speed when camera is on with XZ plane
-	if abs(sin(rotation.x)) < 0.1: input_vec.y = 0
-	# scaling forward so pitched ortho camera speed seems constant as if 2D
-	var move_vec := yaw * Vector3(input_vec.x, 0, input_vec.y / sin(rotation.x))
-	position += move_vec * move_speed * delta
-	
+	var snap_radians = deg_to_rad(snap_threshold)
+
 	# orbit
 	if Input.is_action_just_pressed("cam_orbit_right"):
-		_target_orbit += TAU/8
+		_target_yaw += TAU / 8
 	if Input.is_action_just_pressed("cam_orbit_left"):
-		_target_orbit -= TAU/8
-	rotation.y = lerpf(rotation.y, _target_orbit, 1.0 - 2.0 ** (-4.0 * delta * orbit_speed))
-	if absf(rotation.y - _target_orbit):
-		var tween = get_tree().create_tween()
-		tween.tween_property(self, "rotation:y", _target_orbit, 0.1)
-		
+		_target_yaw -= TAU / 8
+	rotation.y = lerp_angle(rotation.y, _target_yaw, 1.0 - 2.0 ** (-4.0 * delta * orbit_speed))
+	if abs(angle_difference(rotation.y, _target_yaw)) < snap_radians:
+		rotation.y = _target_yaw
+
 	# height
 	if Input.is_action_just_pressed("cam_height_up"):
-		_target_height -= TAU/36
+		_target_pitch -= TAU / 36
 	if Input.is_action_just_pressed("cam_height_down"):
-		_target_height += TAU/36
-	rotation.x = lerpf(rotation.x, _target_height, 1.0 - 2.0 ** (-4.0 * delta * orbit_speed))
-	if absf(rotation.x - _target_height) < 0.02:
-		var tween = get_tree().create_tween()
-		tween.tween_property(self, "rotation:x", _target_height, 0.1)
+		_target_pitch += TAU / 36
+	rotation.x = lerpf(rotation.x, _target_pitch, 1.0 - 2.0 ** (-4.0 * delta * orbit_speed))
+	if abs(angle_difference(rotation.x, _target_pitch)) < snap_radians:
+		rotation.x = _target_pitch

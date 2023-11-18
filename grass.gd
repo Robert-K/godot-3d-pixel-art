@@ -6,15 +6,15 @@ extends MultiMeshInstance3D
 @export var noise: Noise = null
 
 # Calculate the gradient of the noise at a given point
-func gradient(x, y, d) -> Vector2:
+func gradient(x, y, d):
 	var dx = noise.get_noise_2d(x + d, y) - noise.get_noise_2d(x - d, y)
 	var dy = noise.get_noise_2d(x, y + d) - noise.get_noise_2d(x, y - d)
 	return Vector2(dx, dy)
 
 func scatter():
 	multimesh.instance_count = 0
-	multimesh.use_custom_data = true
-	multimesh.use_colors = true
+	#multimesh.use_custom_data = true
+	#multimesh.use_colors = true
 	multimesh.instance_count = int(sqrt(grass_count) * sqrt(grass_count))
 	# get terrain bounds
 	var bounds = terrain.mesh.get_aabb()
@@ -31,8 +31,8 @@ func scatter():
 			var y_pos = terrain.global_position.y
 			var pos = Vector2(x_pos, z_pos) + gradient(x_pos, z_pos, 1)
 			multimesh.set_instance_transform(placed, Transform3D(Basis(), Vector3(pos.x, y_pos, pos.y)))
-			var color = Color.from_hsv(randf(), 1, 1)
-			multimesh.set_instance_color(placed, color)
+			#var color = Color.from_hsv(randf(), 1, 1)
+			#multimesh.set_instance_color(placed, color)
 			placed += 1
 	print("Placed:", placed)
 

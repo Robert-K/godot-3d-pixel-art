@@ -14,15 +14,16 @@ var _snap_nodes: Array[Node]
 var _pre_snapped_positions: Array[Vector3]
 
 
-func _ready() -> void:
+func _ready():
 	RenderingServer.frame_post_draw.connect(_snap_objects_revert)
 
 
-func _process(_delta: float) -> void:
+func _process(_delta: float):
 	# rotation changes the snap space
 	if global_rotation != _prev_rotation:
 		_prev_rotation = global_rotation
 		_snap_space = global_transform
+		DebugDraw2D.set_text("snap_space", str(global_rotation))
 	_texel_size = size / float((get_viewport() as SubViewport).size.y)
 	# camera position in snap space
 	var snap_space_position := global_position * _snap_space
@@ -42,7 +43,7 @@ func _process(_delta: float) -> void:
 		texel_error = Vector2.ZERO
 
 
-func _snap_objects() -> void:
+func _snap_objects():
 	_snap_nodes = get_tree().get_nodes_in_group("snap")
 	_pre_snapped_positions.resize(_snap_nodes.size())
 	for i in _snap_nodes.size():
@@ -54,7 +55,7 @@ func _snap_objects() -> void:
 		node.global_position = _snap_space * snapped_snap_space_pos
 
 
-func _snap_objects_revert() -> void:
+func _snap_objects_revert():
 	for i in _snap_nodes.size():
 		(_snap_nodes[i] as Node3D).global_position = _pre_snapped_positions[i]
 	_snap_nodes.clear()

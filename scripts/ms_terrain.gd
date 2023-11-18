@@ -1,13 +1,10 @@
 @tool
 extends MeshInstance3D
 
-@export var noise: Noise
-@export var map_size: Vector2i = Vector2i(64, 64)
+@export var heightmap: Texture2D
 @export var square_size: float = 1
 @export var draw_control_nodes: bool = false
 @export var draw_outlines: bool = false
-@export var cells_per_tile: float = 1
-@export var speed: float = 1
 
 @export var height_scale: float = 8
 @export var step_height: float = 1
@@ -16,7 +13,7 @@ extends MeshInstance3D
 
 @export var terrace_material: Material
 
-var offset: float = 0
+@export var grass_multimesh: MultiMeshInstance3D
 
 var map: Array
 var terraces: Array
@@ -29,9 +26,6 @@ func _get_tool_buttons():
 
 
 func _process(delta):
-	if not Engine.is_editor_hint():
-		offset += delta * speed
-		test()
 	for terrace in terraces:
 		if draw_control_nodes:
 			terrace.debug_draw_control_nodes()
@@ -42,40 +36,40 @@ func _process(delta):
 
 func test():
 	# Random map
+	for child in get_children():
+		if child is StaticBody3D:
+			child.queue_free()
 	map = []
-	if Engine.is_editor_hint():
-		offset = randf() * 1000
-	map.resize(map_size.x)
+	var image = heightmap.get_image()
+	map.resize(heightmap.get_width())
 	for x in range(map.size()):
 		var col = []
-		col.resize(map_size.y)
+		col.resize(heightmap.get_height())
 		map[x] = col
 		for y in range(map[x].size()):
-			var nx = round(x / cells_per_tile)
-			var ny = round(y / cells_per_tile)
-			map[x][y] = MSMapTile.new(
-				(noise.get_noise_3d(nx, ny, offset) * 0.5 + 0.5) * height_scale
-			)
+			map[x][y] = MSMapTile.new(image.get_pixel(x, y).r * height_scale)
 	var time = Time.get_ticks_msec()
 	generate_terraces()
 	var tmp_mesh = ArrayMesh.new()
 	for terrace in terraces:
 		add_terrace_surface_to_mesh(tmp_mesh, terrace, terrace_material)
+		add_terrace_walls_to_mesh(tmp_mesh, terrace, terrace_material)
 	mesh = tmp_mesh
+	#mesh = generate_terrace_mesh_combined(terraces, terrace_material)
+	create_trimesh_collision()
 	generation_time = Time.get_ticks_msec() - time
 
 
 func generate_terraces():
 	terraces = []
 	var current_height = 0
-	while current_height < height_scale:
+	while current_height < height_scale + step_height:
 		terraces.append(
 			MSTerrace.new(
 				map, square_size, current_height, merge_threshold, slope_multiplier, terraces.size()
 			)
 		)
 		current_height += step_height
-
 
 func add_terrace_surface_to_mesh(
 	array_mesh: ArrayMesh, terrace: MSTerrace, _terrace_material: Material
@@ -90,6 +84,38 @@ func add_terrace_surface_to_mesh(
 	if terrace.vertices.size() > 0:
 		array_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface_array)
 		array_mesh.surface_set_material(array_mesh.get_surface_count() - 1, _terrace_material)
+
+func add_terrace_walls_to_mesh(
+	array_mesh: ArrayMesh, terrace: MSTerrace, _wall_material: Material
+):
+	var surface_array = []
+	surface_array.resize(Mesh.ARRAY_MAX)
+	surface_array[Mesh.ARRAY_VERTEX] = terrace.wall_vertices
+	# surface_array[Mesh.ARRAY_TEX_UV] = terrace.uvs
+	# surface_array[Mesh.ARRAY_NORMAL] = terrace.normals
+	surface_array[Mesh.ARRAY_INDEX] = terrace.wall_indices
+
+	if terrace.vertices.size() > 0:
+		array_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface_array)
+		array_mesh.surface_set_material(array_mesh.get_surface_count() - 1, _wall_material)
+
+func generate_terrace_mesh_combined(terraces: Array, _terrace_material: Material):
+	var tmp_mesh = ArrayMesh.new()
+	var surface_array = []
+	surface_array.resize(Mesh.ARRAY_MAX)
+	surface_array[Mesh.ARRAY_VERTEX] = PackedVector3Array()
+	surface_array[Mesh.ARRAY_TEX_UV] = PackedVector2Array()
+	surface_array[Mesh.ARRAY_NORMAL] = PackedVector3Array()
+	surface_array[Mesh.ARRAY_INDEX] = PackedInt32Array()
+	for terrace in terraces:
+		surface_array[Mesh.ARRAY_VERTEX] += terrace.vertices
+		surface_array[Mesh.ARRAY_TEX_UV] += terrace.uvs
+		surface_array[Mesh.ARRAY_NORMAL] += terrace.normals
+		surface_array[Mesh.ARRAY_INDEX] += terrace.indices
+	if surface_array[Mesh.ARRAY_VERTEX].size() > 0:
+		tmp_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface_array)
+		tmp_mesh.surface_set_material(0, _terrace_material)
+	return tmp_mesh
 
 
 class MSTerrace:
@@ -107,6 +133,8 @@ class MSTerrace:
 	var merge_threshold: float
 	var slope_multiplier: float
 	var index: int
+	var wall_vertices: PackedVector3Array
+	var wall_indices: PackedInt32Array
 
 	func _init(
 		_map: Array,
@@ -141,6 +169,7 @@ class MSTerrace:
 		calculate_mesh_outlines()
 		calculate_uvs()
 		calculate_normals()
+		create_wall_mesh()
 
 	func debug_draw_control_nodes():
 		for x in range(square_grid.control_nodes.size()):
@@ -369,6 +398,27 @@ class MSTerrace:
 		for i in range(normals.size()):
 			normals[i] = Vector3.UP
 
+	func create_wall_mesh():
+		var wall_depth = height
+		wall_vertices = []
+		wall_indices = []
+		for outline in outlines:
+			for i in range(outline.size() - 1):
+				var vertex_a = vertices[outline[i]]
+				var vertex_b = vertices[outline[i + 1]]
+				var wall_vertex_a = Vector3(vertex_a.x, vertex_a.y - wall_depth, vertex_a.z)
+				var wall_vertex_b = Vector3(vertex_b.x, vertex_b.y - wall_depth, vertex_b.z)
+				wall_vertices.append(wall_vertex_a)
+				wall_vertices.append(wall_vertex_b)
+				wall_vertices.append(vertex_b)
+				wall_vertices.append(vertex_a)
+				var wall_index_offset = wall_vertices.size() - 4
+				wall_indices.append(wall_index_offset + 0)
+				wall_indices.append(wall_index_offset + 1)
+				wall_indices.append(wall_index_offset + 2)
+				wall_indices.append(wall_index_offset + 2)
+				wall_indices.append(wall_index_offset + 3)
+				wall_indices.append(wall_index_offset + 0)
 
 class MSSquareGrid:
 	var squares: Array
@@ -395,7 +445,7 @@ class MSSquareGrid:
 			col.resize(node_count_y)
 			control_nodes[x] = col
 			for y in range(node_count_y):
-				var map_tile = map[x][y]
+				var map_tile: MSMapTile = map[x][y]
 				var position = Vector3(
 					-map_width / 2 + x * square_size,
 					(map_tile.height - height) * slope_multiplier + height,
