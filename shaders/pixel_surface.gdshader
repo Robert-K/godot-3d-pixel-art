@@ -33,6 +33,7 @@ vec3 _view_from_screen(vec2 _uv, float _depth, mat4 _inv_proj) {
 
 varying mat4 world_mat;
 varying vec3 _vertex;
+varying float is_outline;
 
 void vertex() {
 	world_mat = INV_VIEW_MATRIX;
@@ -111,7 +112,7 @@ void fragment() {
 	) {
 		ALBEDO = mix(ALBEDO, edge_color, edge_intensity);
 	}
-	
+	is_outline = 0.0;
 	 // ===== outline ===== //
 	if (
 		vpos.z - vpos_b.z > depth_thresh ||
@@ -120,6 +121,7 @@ void fragment() {
 		vpos.z - vpos_l.z > depth_thresh
 	) {
 		ALBEDO = mix(ALBEDO, outline_color, outline_intensity);
+		is_outline = 1.0;
 	}
 	_vertex = VERTEX;
 }
@@ -173,4 +175,8 @@ void light() {
 	vec3 diffuse = ALBEDO.rgb * LIGHT_COLOR / PI;
 	diffuse *= diffuse_stepped;
 	DIFFUSE_LIGHT += diffuse;
+
+	if (ATTENUATION > 0.9) {
+		DIFFUSE_LIGHT += vec3(is_outline * 0.5); // lit outline experiment, looks kinda shit
+	}
 }

@@ -1,5 +1,6 @@
-[gd_scene load_steps=19 format=3 uid="uid://byv0qfl8uwfbl"]
+[gd_scene load_steps=20 format=3 uid="uid://byv0qfl8uwfbl"]
 
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_g6cit"]
 [ext_resource type="PackedScene" uid="uid://ca86pclluf4m8" path="res://scenes/blender_world.tscn" id="2_1fo61"]
 [ext_resource type="Script" path="res://scripts/camera_rig.gd" id="3_ga5om"]
 [ext_resource type="Script" path="res://scripts/rendering/camera_3d_texel_snapped.gd" id="4_6v5uq"]
@@ -58,6 +59,7 @@ viewport_path = NodePath("SubViewport")
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_omdoe"]
 
 [node name="Main" type="Node3D"]
+script = ExtResource("1_g6cit")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_6617m")
@@ -159,8 +161,5 @@ bones/17/rotation = Quaternion(-0.707747, -0.0107031, -0.110599, 0.697673)
 bones/18/rotation = Quaternion(-0.716426, 1.56871e-10, -1.74981e-08, 0.697663)
 bones/22/rotation = Quaternion(0.993782, -0.0706372, 0.085773, 0.00712556)
 bones/22/scale = Vector3(1.00001, 1, 0.999643)
-
-[node name="AnimationPlayer" parent="Player/fox" index="2"]
-playback_default_blend_time = 0.25
 
 [editable path="Player/fox"]

@@ -15,6 +15,9 @@ func angle_difference(from, to):
 	var difference = fmod(to - from, TAU)
 	return fmod(2 * difference, TAU) - difference
 
+func _ready():
+	global_position = follow_target.global_position
+
 
 func _process(delta: float):
 	# movement

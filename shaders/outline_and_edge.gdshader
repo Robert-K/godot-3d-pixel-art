@@ -23,6 +23,8 @@ vec3 _view_from_screen(vec2 _uv, float _depth, mat4 _inv_proj) {
 }
 #define view_from_screen(uv, depth_tex) _view_from_screen((uv), textureLod((depth_tex), (uv), 0.0).r, INV_PROJECTION_MATRIX)
 
+varying float is_outline;
+
 void fragment() {
 	ALPHA = 0.0;
 	
@@ -105,7 +107,7 @@ void fragment() {
 		ALPHA = edge_color.a;
 		ALBEDO = edge_color.rgb;
 	}
-	
+	is_outline = 0;
 	 // ===== outline ===== //
 	if (
 		vpos.z - vpos_b.z > depth_thresh ||
@@ -116,5 +118,10 @@ void fragment() {
 		EMISSION = outline_color.rgb;
 		ALPHA = outline_color.a;
 		ALBEDO = outline_color.rgb;
+		is_outline = 1;
+	}
+
+	light() {
+		EMISSION = vec3(is_outline); // just a test
 	}
 }
