@@ -1,0 +1,20 @@
+[gd_resource type="StandardMaterial3D" load_steps=4 format=3 uid="uid://drylnted60ase"]
+
+[ext_resource type="Texture2D" uid="uid://b2mai1tildorv" path="res://assets/fox/fox_sword_diffuse.png" id="1_oumpy"]
+[ext_resource type="Texture2D" uid="uid://b67tf4lw1c014" path="res://assets/fox/fox_sword_metal.png" id="2_rtvpa"]
+[ext_resource type="Texture2D" uid="uid://uqk2m84s00y1" path="res://assets/fox/fox_bow_normal.png" id="3_4ltt4"]
+
+[resource]
+resource_name = "Material.008"
+cull_mode = 2
+diffuse_mode = 3
+specular_mode = 1
+albedo_texture = ExtResource("1_oumpy")
+metallic = 1.0
+metallic_texture = ExtResource("2_rtvpa")
+metallic_texture_channel = 2
+roughness = 0.5
+roughness_texture = ExtResource("2_rtvpa")
+roughness_texture_channel = 1
+normal_enabled = true
+normal_texture = ExtResource("3_4ltt4")

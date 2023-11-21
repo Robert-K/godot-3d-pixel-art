@@ -7,7 +7,7 @@ uniform sampler2D albedo_texture : source_color;
 uniform bool clamp_diffuse_to_max = false;
 uniform vec3 cliff_color : source_color = vec3(1.0f);
 
-uniform int cuts : hint_range(1, 8) = 3;
+global uniform int toon_cuts : hint_range(1, 8) = 3;
 uniform float wrap : hint_range(-2.0f, 2.0f) = 0.0f;
 uniform float steepness : hint_range(1.0f, 8.0f) = 1.0f;
 
@@ -28,8 +28,15 @@ uniform sampler2D ramp : source_color;
 uniform bool use_borders = false;
 uniform float border_width = 0.01f;
 
+global uniform sampler2D cloud_texture : source_color, filter_linear_mipmap, repeat_enable;
+global uniform float cloud_scale = 0.1;
+global uniform vec2 cloud_speed = vec2(0.03);
+uniform float noise_strength = 1.0;
+
 varying vec3 vertex_pos;
 varying vec3 normal;
+varying mat4 world_mat;
+varying vec3 _vertex;
 
 float split_specular(float specular) {
 	return step(0.5f, specular);
@@ -38,9 +45,11 @@ float split_specular(float specular) {
 void vertex() {
 	vertex_pos = VERTEX;
 	normal = NORMAL;
+	world_mat = INV_VIEW_MATRIX;
 }
 
 void fragment() {
+	_vertex = VERTEX;
 	ALBEDO = mix(cliff_color, albedo.rgb * texture(albedo_texture, UV).rgb, dot(normal, vec3(0,1,0)));
 }
 
@@ -54,9 +63,47 @@ void light() {
 	// Diffuse lighting.
 	float NdotL = dot(NORMAL, LIGHT);
 	float diffuse_amount = NdotL + (attenuation - 1.0) + wrap;
+
+	if (LIGHT_IS_DIRECTIONAL) {
+		//ray
+		// p = ray_start + ray_dir * t
+		vec3 ray_dir = -LIGHT; // in view space
+		ray_dir = mat3(world_mat) * ray_dir; // in world space
+		vec3 ray_start = (INV_VIEW_MATRIX * vec4(_vertex, 1.0f)).xyz;
+		
+		//plane
+		// (p - p0) . n = 0
+		vec3 n = vec3(0.0, 1.0, 0.0); 
+		vec3 PO = vec3(0.0, 1.0, 0.0); // can make offset to the top
+		vec3 v = PO - ray_start;
+
+		// solve for parameter t
+		// t = ((p0 - ray_start) . n) / (ray_dir . n)
+		float t = dot(normalize(v), n) * length(v) / dot(ray_dir, n);
+		vec3 P = ray_start + t * ray_dir;  // in world space
+		
+		vec2 uv = P.xz; // convert it to texture UV
+		vec2 uv_offset = vec2(TIME, TIME) * cloud_speed;
+
+		vec4 rg = texture( cloud_texture, uv * cloud_scale + uv_offset) * noise_strength;
+		
+		float clouds = smoothstep(0.2, 1.0, 1.0 - rg.r);
+
+		//make it less dark, can skip it
+		//clouds *= 0.9;
+		//clouds += 0.1;
+		
+		//To sample shadow with different blur param, check the tutorial linked in the description
+		//float blur = 1.;
+		//if(clouds < 1.0) blur += 10. * smoothstep(0.2, 1.0, rg.r) ;	
+		//float shadow = get_directional_shadow(LIGHT_INDEX, _vertex, blur);
+		
+		diffuse_amount -= clouds;
+	}
+
 	//float diffuse_amount = NdotL * attenuation + wrap;
 	diffuse_amount *= steepness;
-	float cuts_inv = 1.0f / float(cuts);
+	float cuts_inv = 1.0f / float(toon_cuts);
 	float diffuse_stepped = clamp(diffuse_amount + mod(1.0f - diffuse_amount, cuts_inv), 0.0f, 1.0f);
 
 	// Calculate borders.
@@ -74,7 +121,7 @@ void light() {
 	} else {
 		diffuse *= diffuse_stepped * (1.0f - border);
 	}
-	
+
 	if (clamp_diffuse_to_max) {
 		// Clamp diffuse to max for multiple light sources.
 		DIFFUSE_LIGHT = max(DIFFUSE_LIGHT, diffuse);

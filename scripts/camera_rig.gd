@@ -36,6 +36,7 @@ func _process(delta: float):
 		_target_pitch -= TAU / 36
 	if Input.is_action_just_pressed("cam_height_down"):
 		_target_pitch += TAU / 36
-	rotation.x = lerpf(rotation.x, _target_pitch, 1.0 - 2.0 ** (-4.0 * delta * orbit_speed))
+	_target_pitch = clamp(_target_pitch, -TAU / 4, TAU / 4)
+	rotation.x = lerp_angle(rotation.x, _target_pitch, 1.0 - 2.0 ** (-4.0 * delta * orbit_speed))
 	if abs(angle_difference(rotation.x, _target_pitch)) < snap_radians:
 		rotation.x = _target_pitch

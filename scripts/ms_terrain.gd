@@ -49,11 +49,16 @@ func test():
 		for y in range(map[x].size()):
 			map[x][y] = MSMapTile.new(image.get_pixel(x, y).r * height_scale)
 	var time = Time.get_ticks_msec()
-	generate_terraces()
+	# generate_terraces()
+	var terrace = MSTerrace.new(
+		map, square_size, 0, merge_threshold, slope_multiplier, 0
+	)
 	var tmp_mesh = ArrayMesh.new()
-	for terrace in terraces:
-		add_terrace_surface_to_mesh(tmp_mesh, terrace, terrace_material)
-		add_terrace_walls_to_mesh(tmp_mesh, terrace, terrace_material)
+	add_terrace_surface_to_mesh(tmp_mesh, terrace, terrace_material)
+	add_terrace_walls_to_mesh(tmp_mesh, terrace, terrace_material)
+	# for terrace in terraces:
+	# 	add_terrace_surface_to_mesh(tmp_mesh, terrace, terrace_material)
+	# 	add_terrace_walls_to_mesh(tmp_mesh, terrace, terrace_material)
 	mesh = tmp_mesh
 	#mesh = generate_terrace_mesh_combined(terraces, terrace_material)
 	create_trimesh_collision()

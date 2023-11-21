@@ -1,0 +1,16 @@
+[gd_resource type="StandardMaterial3D" load_steps=3 format=3 uid="uid://ch5yksgr8l6x0"]
+
+[ext_resource type="Texture2D" uid="uid://d3vq4leh8i521" path="res://assets/fox/fox_Diffuse.png" id="1_tkq8e"]
+[ext_resource type="Texture2D" uid="uid://fgw6tfmsvhs0" path="res://assets/fox/fox_Normal.png" id="2_x00t5"]
+
+[resource]
+resource_name = "Material"
+transparency = 2
+alpha_scissor_threshold = 0.5
+alpha_antialiasing_mode = 0
+cull_mode = 2
+diffuse_mode = 3
+specular_mode = 2
+albedo_texture = ExtResource("1_tkq8e")
+normal_enabled = true
+normal_texture = ExtResource("2_x00t5")

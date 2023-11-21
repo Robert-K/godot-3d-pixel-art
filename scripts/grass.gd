@@ -4,6 +4,7 @@ extends MultiMeshInstance3D
 @export var grass_count: int = 1000
 @export var attempts_per_grass: int = 2
 @export var noise: Noise = null
+@export var noise_influence: float = 2.0
 
 # Calculate the gradient of the noise at a given point
 func gradient(x, y, d):
@@ -29,7 +30,7 @@ func scatter():
 			var x_pos = lerp(start.x, end.x, x / sqrt(grass_count))
 			var z_pos = lerp(start.z, end.z, z / sqrt(grass_count))
 			var y_pos = terrain.global_position.y
-			var pos = Vector2(x_pos, z_pos) + gradient(x_pos, z_pos, 1)
+			var pos = Vector2(x_pos, z_pos) + gradient(x_pos, z_pos, 1) * noise_influence
 			multimesh.set_instance_transform(placed, Transform3D(Basis(), Vector3(pos.x, y_pos, pos.y)))
 			#var color = Color.from_hsv(randf(), 1, 1)
 			#multimesh.set_instance_color(placed, color)

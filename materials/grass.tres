@@ -7,9 +7,9 @@
 render_priority = 0
 shader = ExtResource("1_u388x")
 shader_parameter/albedo = Color(0.65098, 0.701961, 0.372549, 1)
-shader_parameter/cuts = 3
 shader_parameter/groups = 6
 shader_parameter/emissive_threshold = 0.99
 shader_parameter/unlit_threshold = 0.99
+shader_parameter/noise_strength = 1.0
 shader_parameter/fps = 2.0
 shader_parameter/alpha_texture = ExtResource("2_udbdg")
