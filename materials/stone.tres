@@ -1,10 +1,10 @@
-[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://7ajwrnn6uf6m"]
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://bqshylr6jp7td"]
 
-[ext_resource type="Shader" path="res://shaders/pixel_surface.gdshader" id="2_1sdht"]
+[ext_resource type="Shader" path="res://shaders/pixel_surface.gdshader" id="1_yaum0"]
 
 [resource]
 render_priority = 0
-shader = ExtResource("2_1sdht")
+shader = ExtResource("1_yaum0")
 shader_parameter/albedo = Color(0.6, 0.5, 0.5, 1)
 shader_parameter/cuts = 3
 shader_parameter/outline_intensity = 0.1

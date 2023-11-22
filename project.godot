@@ -30,6 +30,10 @@ version_control/autoload_on_startup=true
 
 enabled=PackedStringArray("res://addons/file_browser/plugin.cfg", "res://addons/imrp/plugin.cfg", "res://addons/tool_button/plugin.cfg")
 
+[filesystem]
+
+import/fbx/enabled=false
+
 [input]
 
 move_forward={
