@@ -1,3 +1,5 @@
+render_mode depth_prepass_alpha; // Set render mode for depth texture access
+
 // ----- uniforms ----- //
 
 uniform sampler2D depth_texture : hint_depth_texture, repeat_disable, filter_nearest;
@@ -14,8 +16,6 @@ uniform float edge_intensity : hint_range(0.0, 1.0, 0.01) = 0.6;
 uniform vec3  edge_color : source_color = vec3(0.7, 0.6, 0.6);
 uniform float convex_threshold = 0.1;
 
-// ----- varyings ----- //
-
 // ----- functions ----- //
 
 // a little function/macro to encapsulate getting the view position
@@ -25,8 +25,8 @@ vec3 _view_from_screen(vec2 _uv, float _depth, mat4 _inv_proj) {
 }
 #define view_from_screen(uv, depth_tex) _view_from_screen((uv), textureLod((depth_tex), (uv), 0.0).r, _inv_proj)
 
-void _outline_frag(vec2 _screen_uv, out vec3 _albedo, mat4 _inv_proj, vec2 _viewport_size) {
-    // fragment position in view space
+void _outline_frag(vec2 _screen_uv, inout vec3 _albedo, mat4 _inv_proj, vec2 _viewport_size) {
+	// fragment position in view space
 	vec3 vpos = view_from_screen(_screen_uv, depth_texture);
 	// fragment normal in view space
 	vec3 normal = texture(normal_roughness_texture, _screen_uv).xyz * 2.0 - 1.0;
@@ -97,7 +97,8 @@ void _outline_frag(vec2 _screen_uv, out vec3 _albedo, mat4 _inv_proj, vec2 _view
 	) {
 		_albedo = mix(_albedo, edge_color, edge_intensity);
 	}
-	// ===== outline ===== //
+	
+	 // ===== outline ===== //
 	if (
 		vpos.z - vpos_b.z > depth_thresh ||
 		vpos.z - vpos_t.z > depth_thresh ||
@@ -106,5 +107,5 @@ void _outline_frag(vec2 _screen_uv, out vec3 _albedo, mat4 _inv_proj, vec2 _view
 	) {
 		_albedo = mix(_albedo, outline_color, outline_intensity);
 	}
-    #define outline_frag _outline_frag(SCREEN_UV, ALBEDO, INV_PROJECTION_MATRIX, VIEWPORT_SIZE)
 }
+#define outline_frag _outline_frag(SCREEN_UV, ALBEDO, INV_PROJECTION_MATRIX, VIEWPORT_SIZE)

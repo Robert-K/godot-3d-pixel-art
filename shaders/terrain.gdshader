@@ -7,7 +7,7 @@ uniform sampler2D albedo_texture : source_color;
 uniform bool clamp_diffuse_to_max = false;
 uniform vec3 cliff_color : source_color = vec3(1.0f);
 
-global uniform int toon_cuts : hint_range(1, 8) = 3;
+global uniform int cel_cuts : hint_range(1, 8) = 3;
 uniform float wrap : hint_range(-2.0f, 2.0f) = 0.0f;
 uniform float steepness : hint_range(1.0f, 8.0f) = 1.0f;
 
@@ -103,7 +103,7 @@ void light() {
 
 	//float diffuse_amount = NdotL * attenuation + wrap;
 	diffuse_amount *= steepness;
-	float cuts_inv = 1.0f / float(toon_cuts);
+	float cuts_inv = 1.0f / float(cel_cuts);
 	float diffuse_stepped = clamp(diffuse_amount + mod(1.0f - diffuse_amount, cuts_inv), 0.0f, 1.0f);
 
 	// Calculate borders.

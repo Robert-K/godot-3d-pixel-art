@@ -96,13 +96,17 @@ cloud_speed={
 }
 cloud_scale={
 "type": "float",
-"value": 0.1
-}
-toon_cuts={
-"type": "int",
-"value": 3
+"value": 0.05
 }
 cloud_texture={
 "type": "sampler2D",
 "value": "res://shaders/cloud_texture.tres"
+}
+cloud_strength={
+"type": "float",
+"value": 1.0
+}
+cel_cuts={
+"type": "int",
+"value": 3
 }

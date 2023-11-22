@@ -13,13 +13,13 @@ varying vec3 _vertex;
 
 // ----- functions ----- //
 
-float cloud_shadow() {
-    if (LIGHT_IS_DIRECTIONAL) {
+float _cloud_shadow(bool _light_is_dir, vec3 _light, mat4 _inv_view, float _time) {
+    if (_light_is_dir) {
 		//ray
 		// p = ray_start + ray_dir * t
-		vec3 ray_dir = -LIGHT; // in view space
+		vec3 ray_dir = -_light; // in view space
 		ray_dir = mat3(_world_matrix) * ray_dir; // in world space
-		vec3 ray_start = (INV_VIEW_MATRIX * vec4(_vertex, 1.0f)).xyz;
+		vec3 ray_start = (_inv_view * vec4(_vertex, 1.0f)).xyz;
 		
 		//plane
 		// (p - p0) . n = 0
@@ -33,10 +33,12 @@ float cloud_shadow() {
 		vec3 P = ray_start + t * ray_dir;  // in world space
 		
 		vec2 uv = P.xz; // convert it to texture UV
-		vec2 uv_offset = vec2(TIME, TIME) * cloud_speed;
+		vec2 uv_offset = vec2(_time) * cloud_speed;
 
-		vec4 rg = texture( cloud_texture, uv * cloud_scale + uv_offset) * cloud_strength;
+		vec4 rg = texture( cloud_texture, uv * cloud_scale + uv_offset);
 		
-		return smoothstep(0.2, 1.0, 1.0 - rg.r);
+		return smoothstep(0.2, 1.0, (1.0 - rg.r) * cloud_strength);
 	}
+	return 0.0;
 }
+#define cloud_shadow _cloud_shadow(LIGHT_IS_DIRECTIONAL, LIGHT, INV_VIEW_MATRIX, TIME)

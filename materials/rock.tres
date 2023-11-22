@@ -5,13 +5,12 @@
 [resource]
 render_priority = 0
 shader = ExtResource("2_1sdht")
-shader_parameter/albedo = Color(0.6, 0.5, 0.5, 1)
-shader_parameter/cuts = 3
-shader_parameter/outline_intensity = 0.1
+shader_parameter/albedo = Color(0.811765, 0.670588, 0.580392, 1)
+shader_parameter/outline_intensity = 0.35
 shader_parameter/outline_color = Color(0.1, 0.1, 0.2, 1)
 shader_parameter/depth_threshold = 0.25
 shader_parameter/depth_normal_threshold = 0.75
 shader_parameter/depth_normal_threshold_scale = 2.0
-shader_parameter/edge_intensity = 0.6
-shader_parameter/edge_color = Color(0.7, 0.6, 0.6, 1)
+shader_parameter/edge_intensity = 0.78
+shader_parameter/edge_color = Color(0.811765, 0.737255, 0.737255, 1)
 shader_parameter/convex_threshold = 0.1

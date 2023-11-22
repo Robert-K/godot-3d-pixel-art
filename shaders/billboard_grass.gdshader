@@ -3,7 +3,7 @@ render_mode depth_prepass_alpha, depth_draw_opaque;
 
 uniform vec3 albedo : source_color = vec3(0.2, 0.9, 0.1);
 uniform sampler2D alpha_texture : filter_nearest;
-global uniform int toon_cuts : hint_range(1, 8, 1) = 3;
+global uniform int cel_cuts : hint_range(1, 8, 1) = 3;
 uniform int groups = 6;
 
 uniform float emissive_threshold = 0.99;
@@ -101,7 +101,7 @@ void light() {
 		diffuse_amount -= clouds;
 	}
 
-	float cuts_inv = 1.0f / float(toon_cuts);
+	float cuts_inv = 1.0f / float(cel_cuts);
 	float diffuse_stepped = clamp(diffuse_amount + mod(1.0f - diffuse_amount, cuts_inv), 0.0f, 1.0f);
 	
 	// Apply diffuse result to different styles.

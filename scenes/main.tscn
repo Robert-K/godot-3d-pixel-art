@@ -1,4 +1,4 @@
-[gd_scene load_steps=28 format=3 uid="uid://byv0qfl8uwfbl"]
+[gd_scene load_steps=29 format=3 uid="uid://byv0qfl8uwfbl"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_g6cit"]
 [ext_resource type="PackedScene" uid="uid://ca86pclluf4m8" path="res://scenes/blender_world.tscn" id="2_1fo61"]
@@ -11,6 +11,7 @@
 [ext_resource type="Script" path="res://scripts/player.gd" id="10_1vxge"]
 [ext_resource type="Material" uid="uid://brj4bfpyafrve" path="res://assets/fox/fox_toon.tres" id="10_mht8w"]
 [ext_resource type="PackedScene" uid="uid://bj4dsk0ygkix0" path="res://assets/rocks/stone_largeC.glb" id="11_b1ryw"]
+[ext_resource type="Material" uid="uid://bqshylr6jp7td" path="res://materials/stone.tres" id="11_ybw3h"]
 [ext_resource type="PackedScene" uid="uid://cmkxbcb4v1ut4" path="res://assets/rocks/stone_largeD.glb" id="12_wapiu"]
 [ext_resource type="PackedScene" uid="uid://by20apvhovi6t" path="res://assets/rocks/stone_largeF.glb" id="13_q7vjg"]
 
@@ -81,7 +82,7 @@ script = ExtResource("1_g6cit")
 environment = SubResource("Environment_6617m")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(0.151799, 0.867207, 0.474247, 0.0190232, -0.482281, 0.87581, 0.988228, -0.123925, -0.0897068, 0, 0, 0)
+transform = Transform3D(0.707107, -0.5, 0.5, 0, 0.707107, 0.707107, -0.707107, -0.5, 0.5, -0.57025, -0.575798, 0.179441)
 shadow_enabled = true
 
 [node name="Ambience" type="AudioStreamPlayer" parent="."]
@@ -159,7 +160,7 @@ visible = false
 mesh = SubResource("CapsuleMesh_omdoe")
 
 [node name="fox" parent="Player" instance=ExtResource("8_wrnnd")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.92394, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
 
 [node name="Skeleton3D" parent="Player/fox/IdleDemo" index="0"]
 bones/0/rotation = Quaternion(0, 0.707107, 0.707107, 0)
@@ -206,6 +207,9 @@ surface_material_override/0 = ExtResource("10_mht8w")
 
 [node name="Legs_001" parent="Player/fox/IdleDemo/Skeleton3D" index="4"]
 surface_material_override/0 = ExtResource("10_mht8w")
+
+[node name="Sword" parent="Player/fox/IdleDemo/Skeleton3D" index="5"]
+surface_material_override/0 = ExtResource("11_ybw3h")
 
 [node name="Tail" parent="Player/fox/IdleDemo/Skeleton3D" index="6"]
 surface_material_override/0 = ExtResource("10_mht8w")
