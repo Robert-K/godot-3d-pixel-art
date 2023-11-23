@@ -110,3 +110,7 @@ cel_cuts={
 "type": "int",
 "value": 3
 }
+sun_direction={
+"type": "vec3",
+"value": Vector3(0, -1, 0)
+}
